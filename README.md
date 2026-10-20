@@ -1,121 +1,114 @@
-# Heart Disease MLOps — BITS Pilani WILP AIMLCZG523 Assignment 01
+# Heart Disease Prediction — MLOps Pipeline
 
-This repository is structured against the official 50-mark assignment brief. It includes dataset acquisition, EDA, two-model training, cross-validation, optional MLflow tracking, a reusable preprocessing/model pipeline, a FastAPI prediction API, Pytest tests, GitHub Actions CI, Docker packaging, Kubernetes manifests, monitoring configuration, and report/video guidance.
+**BITS Pilani WILP | AIMLCZG523 — Machine Learning Operations | Assignment 01**
 
-> **Honest execution status:** The source code and submission structure have been generated. In this environment the official UCI dataset could not be downloaded, and MLflow/Docker/cloud credentials are unavailable. Therefore, real-dataset model metrics, remote CI execution, container build, deployment, screenshots, and video are **not claimed as completed**. The tests use synthetic data only to validate software behavior; they do not represent model performance.
+An end-to-end MLOps project demonstrating data preparation, exploratory data analysis, machine learning model development, experiment tracking, automated testing, API development, containerization, and deployment configuration using the Cleveland Heart Disease dataset.
+
+## Project Overview
+
+The project demonstrates how a machine learning workflow can be organized into a reproducible software pipeline, from dataset preparation to prediction API and deployment configuration.
+
+### Key Components
+
+- **Data Engineering:** Dataset acquisition, validation, missing-value handling, and preprocessing.
+- **Exploratory Data Analysis:** Feature distributions, class balance, and correlation analysis.
+- **Model Development:** Logistic Regression and Random Forest with cross-validation and evaluation metrics.
+- **Experiment Tracking:** MLflow configuration for tracking model experiments.
+- **Model Packaging:** Reusable preprocessing and prediction pipeline.
+- **API Development:** FastAPI service with health and prediction endpoints.
+- **Testing and CI:** Pytest test suite and GitHub Actions workflow.
+- **Containerization:** Docker configuration for packaging the API.
+- **Deployment and Monitoring:** Kubernetes manifests and Prometheus monitoring configuration.
+
+## Technology Stack
+
+Python · pandas · NumPy · scikit-learn · MLflow · FastAPI · Pytest · Docker · GitHub Actions · Kubernetes · Prometheus
+
+## Repository Structure
+
+```text
+heart-disease-mlops/
+├── src/                  # Data, EDA, training, pipeline and API
+├── tests/                # Automated tests
+├── scripts/              # Utility scripts
+├── notebooks/            # EDA and modelling notebook
+├── artifacts/            # Model and evaluation artifacts
+├── reports/              # Report and project documentation
+├── deployment/           # Kubernetes configuration
+├── monitoring/            # Monitoring configuration
+├── screenshots/          # Submission evidence
+├── .github/workflows/    # CI workflow
+├── Dockerfile
+├── requirements.txt
+└── pyproject.toml
+```
 
 ## Dataset
 
-Use the Cleveland subset of the UCI Heart Disease dataset (303 instances, 13 predictors; target field `num`). Official source: https://archive.ics.uci.edu/dataset/45/heart+disease
+The project uses the processed Cleveland subset of the UCI Heart Disease dataset.
 
-The raw processed Cleveland file has 14 columns without a header. Missing values are represented by `?`. This project maps `num=0` to target 0 and `num=1..4` to target 1. This is a binary educational classification exercise, not a clinical diagnostic tool.
+**Source:** [UCI Machine Learning Repository — Heart Disease](https://archive.ics.uci.edu/dataset/45/heart+disease)
 
-## Project layout
+The original `num` target is converted into a binary label: `0` represents no recorded disease and values `1–4` are mapped to `1`.
 
-- `src/heart_mlops/data.py` — acquisition and data preparation
-- `src/heart_mlops/eda.py` — EDA summaries and plots
-- `src/heart_mlops/pipeline.py` — reproducible preprocessing/model pipeline
-- `src/heart_mlops/train.py` — cross-validation, holdout evaluation, MLflow logging, model export
-- `src/heart_mlops/api.py` — FastAPI `/predict` endpoint
-- `tests/` — automated tests using synthetic fixtures
-- `notebooks/01_eda_and_modeling.ipynb` — guided notebook
-- `.github/workflows/ci.yml` — lint, tests, dataset-backed training job
-- `Dockerfile` — API container
-- `deployment/k8s.yaml` — Kubernetes Deployment and Service
-- `monitoring/` — Prometheus scrape configuration
-- `reports/` — report draft and video narration
-- `screenshots/README.md` — evidence checklist
-
-## Local or cloud setup
+## Getting Started
 
 Python 3.10–3.12 is recommended.
 
 ```bash
 python -m venv .venv
-# Linux/macOS
-source .venv/bin/activate
+```
+
+Activate the environment, then install dependencies:
+
+```bash
 # Windows PowerShell
-# .venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
+$env:PYTHONPATH = "src"
+```
+
+Run the project scripts from the repository root:
+
+```bash
 python scripts/download_data.py
 python -m heart_mlops.eda
 python -m heart_mlops.train
+```
+
+Start the API after the model artifact has been generated:
+
+```bash
 uvicorn heart_mlops.api:app --host 0.0.0.0 --port 8000
 ```
 
-Set the package path before running modules from the repository root:
+API documentation is available at `http://localhost:8000/docs` while the service is running.
+
+## Evaluation and Experiment Tracking
+
+The training pipeline is designed to compare classifiers using cross-validation and holdout evaluation. Evaluation metrics and model artifacts are generated by the training workflow. MLflow can be used to track experiment parameters and results.
+
+Actual metrics should be reported only after running the project successfully on the dataset.
+
+## Testing and Deployment
+
+Run automated tests with:
 
 ```bash
-export PYTHONPATH=src
-# Windows PowerShell: $env:PYTHONPATH = "src"
+pytest
 ```
 
-The training script creates `artifacts/model.joblib`, `artifacts/metrics.json`, and `artifacts/model_card.md`. MLflow tracking is enabled if MLflow is installed; set `MLFLOW_TRACKING_URI` to use a remote tracking server.
+The repository includes GitHub Actions, Docker, Kubernetes, and monitoring configuration. These components require execution in their respective environments before successful CI, container builds, deployment, or monitoring can be claimed.
 
-## API example
+## Project Status
 
-`POST /predict`:
+The repository contains the project implementation and supporting configuration. Dataset-backed training, hosted CI, Docker execution, and deployment must be verified independently; configuration files alone do not establish successful execution.
 
-```json
-{
-  "age": 57,
-  "sex": 1,
-  "cp": 2,
-  "trestbps": 130,
-  "chol": 236,
-  "fbs": 0,
-  "restecg": 0,
-  "thalach": 174,
-  "exang": 0,
-  "oldpeak": 0.0,
-  "slope": 1,
-  "ca": 0,
-  "thal": 2
-}
-```
+## Limitations
 
-Response includes `prediction`, `confidence`, and class probabilities. Confidence is a model score, not a medically calibrated risk estimate.
+This is an educational machine learning project using a small historical dataset. It is not clinically validated and must not be used for diagnosis or medical decisions.
 
-## Docker
+## Academic Context
 
-After running training and creating `artifacts/model.joblib`:
-
-```bash
-docker build -t heart-disease-mlops:local .
-docker run --rm -p 8000:8000 -v "$(pwd)/artifacts:/app/artifacts:ro" heart-disease-mlops:local
-```
-
-Then test `GET /health` and `POST /predict` at `http://localhost:8000`. A Docker build must be run in a Docker-capable environment; it has not been verified in the current environment.
-
-## MLflow
-
-Run training with MLflow installed. The default tracking URI is a local `mlruns` directory. To view the UI:
-
-```bash
-mlflow ui --host 0.0.0.0 --port 5000
-```
-
-For a remote/cloud setup, configure a persistent tracking server and `MLFLOW_TRACKING_URI`. Do not assume local tracking files are automatically available in a hosted runtime after it shuts down.
-
-## GitHub Actions
-
-The workflow runs linting, unit tests, a real-dataset training step, a Docker build, and container endpoint smoke tests. The training job downloads the official dataset, so it needs network access. The workflow itself must be pushed to a GitHub repository and executed by GitHub Actions before it can be represented as successful evidence.
-
-## Kubernetes
-
-Update the image field in `deployment/k8s.yaml` to the image you built and pushed to a registry. Apply with:
-
-```bash
-kubectl apply -f deployment/k8s.yaml
-kubectl get deployments,services
-kubectl port-forward service/heart-disease-api 8000:80
-```
-
-The included LoadBalancer service is cloud-dependent; on Minikube, use `minikube tunnel` or change the service to NodePort for local testing. Kubernetes deployment has not been executed here.
-
-## Important limitations
-
-- The dataset is small and historical; results are educational only.
-- This model is not validated for medical decisions.
-- The project does not contain fabricated real metrics or screenshots.
-- `reports/final_report_draft.docx` is a report draft; insert actual executed metrics, screenshots, repository URL, deployment URL, and video evidence before final submission.
+Prepared for **BITS Pilani Work Integrated Learning Programmes (WILP)** — AIMLCZG523, Machine Learning Operations, Assignment 01.
