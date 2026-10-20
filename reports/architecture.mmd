@@ -1,0 +1,13 @@
+flowchart LR
+  A[UCI Heart Disease Dataset] --> B[Data validation and EDA]
+  B --> C[Preprocessing pipeline]
+  C --> D1[Logistic Regression]
+  C --> D2[Random Forest]
+  D1 --> E[Cross-validation and evaluation]
+  D2 --> E
+  E --> F[MLflow tracking and model artifact]
+  F --> G[GitHub Actions: lint and tests]
+  F --> H[FastAPI inference API]
+  H --> I[Docker image]
+  I --> J[Kubernetes or cloud deployment]
+  J --> K[Request logs and monitoring]

@@ -1,0 +1,22 @@
+Build validation record
+=======================
+Python compileall: PASS
+Pytest: 12 passed, 1 warning (MLflow is not installed in this build environment)
+Training integration test: PASS using a temporary synthetic fixture; artifact, metrics JSON, and confusion-matrix plot produced. This is not an official UCI dataset result.
+Notebook JSON: PASS
+Grafana dashboard JSON: PASS
+GitHub Actions YAML: PASS
+Kubernetes manifest YAML: PASS
+Prometheus config YAML: PASS
+Report export: PASS; final_report_draft.pdf is 10 pages.
+
+Not executed/verified in this environment:
+- Official UCI dataset download and official-data EDA/model metrics: network DNS is blocked here. The acquisition script now tries UCI first, then a validated public mirror.
+- MLflow UI/runs: MLflow is not installed in this environment.
+- Ruff command: Ruff is not installed here; the GitHub Actions runner installs it from requirements.txt.
+- Docker image build/run: Docker engine unavailable.
+- GitHub Actions remote run and GHCR publish: no repository connection or remote workflow run.
+- Kubernetes/cloud deployment and public endpoint: no cluster/cloud credentials.
+- Live Prometheus/Grafana dashboard, real screenshots, and demo video: not produced.
+
+No official-dataset performance metrics or deployment evidence have been fabricated.

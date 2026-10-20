@@ -1,0 +1,77 @@
+name: MLOps CI
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test-and-train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint
+        run: ruff check src tests scripts
+      - name: Unit tests
+        env:
+          PYTHONPATH: src
+        run: pytest -q
+      - name: Download official dataset
+        env:
+          PYTHONPATH: src
+        run: python scripts/download_data.py
+      - name: Train and log experiments
+        env:
+          PYTHONPATH: src
+          MLFLOW_TRACKING_URI: file:./mlruns
+        run: python scripts/train.py
+      - name: Build Docker image
+        run: docker build -t heart-disease-mlops:${{ github.sha }} .
+      - name: Start container and smoke-test API
+        run: |
+          docker run -d --name heart-api -p 8000:8000 heart-disease-mlops:${{ github.sha }}
+          for i in $(seq 1 20); do
+            if curl --fail http://127.0.0.1:8000/health; then break; fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:8000/health
+          curl --fail http://127.0.0.1:8000/metrics
+          docker stop heart-api
+          docker rm heart-api
+      - name: Publish image to GitHub Container Registry
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_OWNER: ${{ github.repository_owner }}
+        run: |
+          IMAGE="ghcr.io/$(echo "$GH_OWNER" | tr '[:upper:]' '[:lower:]')/heart-disease-mlops"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
+          docker tag "heart-disease-mlops:${{ github.sha }}" "$IMAGE:${{ github.sha }}"
+          docker tag "heart-disease-mlops:${{ github.sha }}" "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:latest"
+      - name: Upload model and metrics artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-artifacts
+          path: |
+            artifacts/
+            mlruns/
+          if-no-files-found: warn
+          retention-days: 14

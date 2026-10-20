@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heart-disease-api
+  labels:
+    app: heart-disease-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: heart-disease-api
+  template:
+    metadata:
+      labels:
+        app: heart-disease-api
+    spec:
+      containers:
+        - name: api
+          # Replace with your actual registry/image tag before applying.
+          image: ghcr.io/REPLACE_WITH_GITHUB_USERNAME/heart-disease-mlops:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_PATH
+              value: /app/artifacts/model.joblib
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heart-disease-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: heart-disease-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

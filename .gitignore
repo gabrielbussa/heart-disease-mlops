@@ -1,0 +1,28 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.env
+artifacts/*
+!artifacts/.gitkeep
+mlruns/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+screenshots/*
+!screenshots/README.md
+*.log
+.DS_Store
+# Local experiment tracking database
+mlflow.db
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
